@@ -1,0 +1,493 @@
+// ACADEMIC SYSTEM - EVALUATIONS AND GRADES MODULE
+// Normalized Database Schema with Modular Architecture
+// Following 3NF (Third Normal Form) principles
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==============================================
+// CORE MODULE - Base system entities
+// ==============================================
+
+// Core Enums
+enum UserType {
+  STUDENT
+  TEACHER  
+  ADMINISTRATOR
+  COORDINATOR
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum GenderType {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+// Core Users table - Normalized
+model CoreUser {
+  id                String    @id @default(cuid()) @map("id")
+  username          String    @unique @db.VarChar(50)
+  email             String    @unique @db.VarChar(150)
+  emailVerified     Boolean   @default(false) @map("email_verified")
+  passwordHash      String    @map("password_hash") @db.VarChar(255)
+  userType          UserType  @map("user_type")
+  status            Status    @default(ACTIVE)
+  lastLoginAt       DateTime? @map("last_login_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  profile           CoreUserProfile?
+  roles             CoreUserRole[]
+  sessions          CoreUserSession[]
+  auditLogs         CoreAuditLog[]
+  
+  // Academic relationships
+  teacherEvaluations AcademicEvaluation[] @relation("TeacherEvaluations")
+  studentGrades      AcademicGrade[]      @relation("StudentGrades")
+  graderGrades       AcademicGrade[]      @relation("GraderGrades")
+  enrollments        AcademicEnrollment[]
+
+  @@index([email])
+  @@index([username])
+  @@index([userType, status])
+  @@map("core_users")
+}
+
+// User Profile - Separated for normalization
+model CoreUserProfile {
+  id              String     @id @default(cuid())
+  userId          String     @unique @map("user_id")
+  firstName       String     @map("first_name") @db.VarChar(100)
+  lastName        String     @map("last_name") @db.VarChar(100)
+  documentType    String?    @map("document_type") @db.VarChar(20)
+  documentNumber  String?    @unique @map("document_number") @db.VarChar(30)
+  dateOfBirth     DateTime?  @map("date_of_birth") @db.Date
+  gender          GenderType?
+  phoneNumber     String?    @map("phone_number") @db.VarChar(20)
+  emergencyPhone  String?    @map("emergency_phone") @db.VarChar(20)
+  address         String?    @db.Text
+  city            String?    @db.VarChar(100)
+  country         String?    @db.VarChar(100)
+  zipCode         String?    @map("zip_code") @db.VarChar(10)
+  profileImageUrl String?    @map("profile_image_url") @db.Text
+  biography       String?    @db.Text
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Relationships
+  user            CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([documentNumber])
+  @@index([firstName, lastName])
+  @@map("core_user_profiles")
+}
+
+// Roles table for RBAC
+model CoreRole {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(50)
+  displayName String   @map("display_name") @db.VarChar(100)
+  description String?  @db.Text
+  permissions Json     // JSON array of permissions
+  isSystem    Boolean  @default(false) @map("is_system") // System roles cannot be deleted
+  status      Status   @default(ACTIVE)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  userRoles   CoreUserRole[]
+
+  @@map("core_roles")
+}
+
+// User-Role junction table (Many-to-Many)
+model CoreUserRole {
+  id         String    @id @default(cuid())
+  userId     String    @map("user_id")
+  roleId     String    @map("role_id")
+  assignedBy String?   @map("assigned_by")
+  assignedAt DateTime  @default(now()) @map("assigned_at")
+  expiresAt  DateTime? @map("expires_at")
+  isActive   Boolean   @default(true) @map("is_active")
+
+  // Relationships
+  user       CoreUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       CoreRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("core_user_roles")
+}
+
+// User sessions for security
+model CoreUserSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique @db.VarChar(255)
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  expiresAt DateTime @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  // Relationships
+  user      CoreUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("core_user_sessions")
+}
+
+// Audit log for system tracking
+model CoreAuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  @map("user_id")
+  action    String   @db.VarChar(100)
+  entity    String   @db.VarChar(100)
+  entityId  String?  @map("entity_id")
+  oldValues Json?    @map("old_values")
+  newValues Json?    @map("new_values")
+  ipAddress String?  @map("ip_address") @db.VarChar(45)
+  userAgent String?  @map("user_agent") @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relationships
+  user      CoreUser? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("core_audit_logs")
+}
+
+// ==============================================
+// ACADEMIC MODULE - Academic management
+// ==============================================
+
+// Academic Enums
+enum PeriodType {
+  SEMESTER
+  TRIMESTER
+  QUARTER
+  ANNUAL
+  SUMMER
+  INTENSIVE
+}
+
+enum PeriodStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EvaluationType {
+  EXAM
+  QUIZ
+  ASSIGNMENT
+  PROJECT
+  PRESENTATION
+  PARTICIPATION
+  LAB_WORK
+  MIDTERM
+  FINAL
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SCHEDULED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  GRADING
+}
+
+enum ItemType {
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  NUMERIC
+  MATCHING
+  FILL_BLANK
+  RUBRIC_CRITERIA
+}
+
+enum GradeStatus {
+  PENDING
+  GRADED
+  REVIEW_REQUESTED
+  UNDER_REVIEW
+  FINAL
+  APPEALED
+}
+
+enum QualitativeGrade {
+  EXCELLENT
+  GOOD
+  SATISFACTORY
+  NEEDS_IMPROVEMENT
+  UNSATISFACTORY
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  DROPPED
+  COMPLETED
+  TRANSFERRED
+  SUSPENDED
+}
+
+// Academic Periods
+model AcademicPeriod {
+  id          String       @id @default(cuid())
+  code        String       @unique @db.VarChar(20)
+  name        String       @db.VarChar(150)
+  type        PeriodType
+  startDate   DateTime     @map("start_date") @db.Date
+  endDate     DateTime     @map("end_date") @db.Date
+  status      PeriodStatus @default(PLANNED)
+  description String?      @db.Text
+  isDefault   Boolean      @default(false) @map("is_default")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // Relationships
+  subjects    AcademicSubject[]
+  evaluations AcademicEvaluation[]
+  enrollments AcademicEnrollment[]
+
+  @@index([code])
+  @@index([startDate, endDate])
+  @@index([status])
+  @@map("academic_periods")
+}
+
+// Academic Subjects/Courses
+model AcademicSubject {
+  id                String   @id @default(cuid())
+  code              String   @unique @db.VarChar(20)
+  name              String   @db.VarChar(200)
+  description       String?  @db.Text
+  credits           Int      @default(1)
+  weeklyHours       Int      @default(1) @map("weekly_hours")
+  semester          Int?
+  knowledgeArea     String?  @map("knowledge_area") @db.VarChar(100)
+  prerequisites     Json?    // Array of prerequisite subject IDs
+  corequisites      Json?    // Array of corequisite subject IDs  
+  learningObjectives Json?   @map("learning_objectives") // Array of learning objectives
+  syllabus          String?  @db.Text
+  bibliography      Json?    // Array of bibliography items
+  status            Status   @default(ACTIVE)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  periods           AcademicPeriod[]
+  evaluations       AcademicEvaluation[]
+  enrollments       AcademicEnrollment[]
+
+  @@index([code])
+  @@index([name])
+  @@index([knowledgeArea])
+  @@index([semester])
+  @@map("academic_subjects")
+}
+
+// Academic Evaluations
+model AcademicEvaluation {
+  id                    String           @id @default(cuid())
+  periodId              String           @map("period_id")
+  subjectId             String           @map("subject_id")
+  teacherId             String           @map("teacher_id")
+  code                  String           @db.VarChar(50)
+  name                  String           @db.VarChar(200)
+  type                  EvaluationType
+  description           String?          @db.Text
+  instructions          String?          @db.Text
+  scheduledDate         DateTime?        @map("scheduled_date")
+  durationMinutes       Int?             @map("duration_minutes")
+  maxScore              Decimal          @default(100.00) @map("max_score") @db.Decimal(5, 2)
+  passingScore          Decimal          @default(60.00) @map("passing_score") @db.Decimal(5, 2)
+  weightPercentage      Decimal          @default(0.00) @map("weight_percentage") @db.Decimal(5, 2)
+  maxAttempts           Int              @default(1) @map("max_attempts")
+  allowLateSubmission   Boolean          @default(false) @map("allow_late_submission")
+  latePenaltyPercentage Decimal?         @default(0.00) @map("late_penalty_percentage") @db.Decimal(5, 2)
+  showResultsToStudents Boolean          @default(true) @map("show_results_to_students")
+  randomizeQuestions    Boolean          @default(false) @map("randomize_questions")
+  status                EvaluationStatus @default(DRAFT)
+  metadata              Json?            // Additional configuration
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  // Relationships
+  period                AcademicPeriod   @relation(fields: [periodId], references: [id], onDelete: Cascade)
+  subject               AcademicSubject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  teacher               CoreUser         @relation("TeacherEvaluations", fields: [teacherId], references: [id])
+  items                 AcademicEvaluationItem[]
+  grades                AcademicGrade[]
+
+  @@unique([periodId, subjectId, code])
+  @@index([periodId, subjectId])
+  @@index([teacherId])
+  @@index([scheduledDate])
+  @@index([status])
+  @@index([type])
+  @@map("academic_evaluations")
+}
+
+// Evaluation Items/Questions
+model AcademicEvaluationItem {
+  id                String   @id @default(cuid())
+  evaluationId      String   @map("evaluation_id")
+  itemNumber        Int      @map("item_number")
+  type              ItemType
+  question          String   @db.Text
+  options           Json?    // For multiple choice, matching, etc.
+  correctAnswer     Json?    @map("correct_answer") // Flexible answer format
+  points            Decimal  @default(1.00) @db.Decimal(5, 2)
+  rubricCriteria    Json?    @map("rubric_criteria") // For rubric-based grading
+  explanation       String?  @db.Text
+  tags              Json?    // Array of tags for categorization
+  difficultyLevel   String?  @map("difficulty_level") @db.VarChar(20)
+  learningObjective String?  @map("learning_objective") @db.VarChar(200)
+  displayOrder      Int      @default(1) @map("display_order")
+  isRequired        Boolean  @default(true) @map("is_required")
+  timeLimit         Int?     @map("time_limit") // In seconds
+  status            Status   @default(ACTIVE)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  evaluation        AcademicEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  gradeDetails      AcademicGradeDetail[]
+
+  @@unique([evaluationId, itemNumber])
+  @@index([evaluationId])
+  @@index([type])
+  @@index([difficultyLevel])
+  @@map("academic_evaluation_items")
+}
+
+// Student Grades
+model AcademicGrade {
+  id                String            @id @default(cuid())
+  evaluationId      String            @map("evaluation_id")
+  studentId         String            @map("student_id")
+  score             Decimal           @map("score") @db.Decimal(5, 2)
+  maxPossibleScore  Decimal           @map("max_possible_score") @db.Decimal(5, 2)
+  percentage        Decimal           @map("percentage") @db.Decimal(5, 2)
+  qualitativeGrade  QualitativeGrade? @map("qualitative_grade")
+  attemptNumber     Int               @default(1) @map("attempt_number")
+  submittedAt       DateTime?         @map("submitted_at")
+  gradedAt          DateTime?         @map("graded_at")
+  gradedBy          String?           @map("graded_by")
+  timeSpentMinutes  Int?              @map("time_spent_minutes")
+  isLateSubmission  Boolean           @default(false) @map("is_late_submission")
+  latePenalty       Decimal?          @default(0.00) @map("late_penalty") @db.Decimal(5, 2)
+  feedback          String?           @db.Text
+  privateNotes      String?           @map("private_notes") @db.Text
+  status            GradeStatus       @default(PENDING)
+  metadata          Json?             // Additional data
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  // Relationships
+  evaluation        AcademicEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  student           CoreUser          @relation("StudentGrades", fields: [studentId], references: [id], onDelete: Cascade)
+  grader            CoreUser?         @relation("GraderGrades", fields: [gradedBy], references: [id])
+  gradeDetails      AcademicGradeDetail[]
+
+  @@unique([evaluationId, studentId, attemptNumber])
+  @@index([evaluationId])
+  @@index([studentId])
+  @@index([gradedBy])
+  @@index([status])
+  @@index([submittedAt])
+  @@map("academic_grades")
+}
+
+// Detailed Grade Items (answers to specific questions)
+model AcademicGradeDetail {
+  id                String   @id @default(cuid())
+  gradeId           String   @map("grade_id")
+  evaluationItemId  String   @map("evaluation_item_id")
+  studentAnswer     Json?    @map("student_answer") // Flexible answer format
+  points            Decimal  @default(0.00) @db.Decimal(5, 2)
+  maxPoints         Decimal  @map("max_points") @db.Decimal(5, 2)
+  isCorrect         Boolean? @map("is_correct")
+  autoGraded        Boolean  @default(false) @map("auto_graded")
+  feedback          String?  @db.Text
+  rubricScores      Json?    @map("rubric_scores") // For rubric-based items
+  partialCredit     Boolean  @default(false) @map("partial_credit")
+  timeSpentSeconds  Int?     @map("time_spent_seconds")
+  flaggedForReview  Boolean  @default(false) @map("flagged_for_review")
+  reviewNotes       String?  @map("review_notes") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relationships
+  grade             AcademicGrade          @relation(fields: [gradeId], references: [id], onDelete: Cascade)
+  evaluationItem    AcademicEvaluationItem @relation(fields: [evaluationItemId], references: [id], onDelete: Cascade)
+
+  @@unique([gradeId, evaluationItemId])
+  @@index([gradeId])
+  @@index([evaluationItemId])
+  @@index([isCorrect])
+  @@index([autoGraded])
+  @@map("academic_grade_details")
+}
+
+// Student Enrollments
+model AcademicEnrollment {
+  id               String           @id @default(cuid())
+  studentId        String           @map("student_id")
+  subjectId        String           @map("subject_id")
+  periodId         String           @map("period_id")
+  enrollmentDate   DateTime         @default(now()) @map("enrollment_date")
+  status           EnrollmentStatus @default(ENROLLED)
+  finalGrade       Decimal?         @map("final_grade") @db.Decimal(5, 2)
+  finalPercentage  Decimal?         @map("final_percentage") @db.Decimal(5, 2)
+  creditsEarned    Int?             @default(0) @map("credits_earned")
+  attendanceRate   Decimal?         @map("attendance_rate") @db.Decimal(5, 2)
+  droppedDate      DateTime?        @map("dropped_date")
+  dropReason       String?          @map("drop_reason") @db.Text
+  completedDate    DateTime?        @map("completed_date")
+  certificateIssued Boolean         @default(false) @map("certificate_issued")
+  notes            String?          @db.Text
+  metadata         Json?            // Additional enrollment data
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  // Relationships
+  student          CoreUser         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  subject          AcademicSubject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  period           AcademicPeriod   @relation(fields: [periodId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, subjectId, periodId])
+  @@index([studentId])
+  @@index([subjectId])
+  @@index([periodId])
+  @@index([status])
+  @@index([enrollmentDate])
+  @@map("academic_enrollments")
+}
