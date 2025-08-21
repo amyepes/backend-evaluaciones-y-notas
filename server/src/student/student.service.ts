@@ -44,13 +44,27 @@ export class StudentService {
         },
       });
 
+      // Filter duplicates by subject ID (additional safety measure)
+      const uniqueSubjects = studentSubjects.reduce((acc, ss) => {
+        const existingIndex = acc.findIndex(item => item.subject.id === ss.subject.id);
+        if (existingIndex === -1) {
+          acc.push(ss);
+        } else {
+          // Keep the most recent enrollment if duplicates exist
+          if (ss.createdAt > acc[existingIndex].createdAt) {
+            acc[existingIndex] = ss;
+          }
+        }
+        return acc;
+      }, [] as typeof studentSubjects);
+
       return {
-        subjects: studentSubjects.map(ss => ({
+        subjects: uniqueSubjects.map(ss => ({
           enrollmentId: ss.id,
           enrolledAt: ss.createdAt,
           subject: ss.subject,
         })),
-        totalSubjects: studentSubjects.length,
+        totalSubjects: uniqueSubjects.length,
       };
     } catch (error) {
       if (error instanceof Error)

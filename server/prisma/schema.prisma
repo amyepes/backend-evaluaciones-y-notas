@@ -39,6 +39,8 @@ model StudentSubject {
   subjectId Int
   subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
+
+  @@unique([studentId, subjectId])
 }
 
 model Subject {
