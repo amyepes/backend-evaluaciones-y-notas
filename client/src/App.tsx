@@ -43,6 +43,11 @@ export default function App() {
             <SubjectDetailsPage />
           </ProtectedRoute>
         } />
+        <Route path="/admin/subjects/edit/:id" element={
+          <ProtectedRoute>
+            <SubjectsPage />
+          </ProtectedRoute>
+        } />
         <Route path="/admin/stats" element={
           <ProtectedRoute>
             <AdminStatsPage />

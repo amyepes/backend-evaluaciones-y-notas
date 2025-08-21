@@ -1,7 +1,7 @@
 import NavComponent from "../components/NavComponent";
 import { useAppContext } from "@/context/useAppContext";
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Settings, GraduationCap, FileText, TrendingUp } from "lucide-react";
+import { Settings, GraduationCap } from "lucide-react";
 import { Link } from "react-router";
 
 export default function HomePage() {
@@ -22,7 +22,7 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div className=" gap-6 max-w-6xl mx-auto">
               <Link to="/admin">
                 <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <Settings className="h-8 w-8" />
@@ -30,26 +30,6 @@ export default function HomePage() {
                 </Button>
               </Link>
               
-              <Link to="/admin/users">
-                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <Users className="h-8 w-8" />
-                  <span className="font-semibold">Gestionar Usuarios</span>
-                </Button>
-              </Link>
-              
-              <Link to="/admin/subjects">
-                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <BookOpen className="h-8 w-8" />
-                  <span className="font-semibold">Gestionar Materias</span>
-                </Button>
-              </Link>
-
-              <Link to="/admin/quizzes">
-                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <FileText className="h-8 w-8" />
-                  <span className="font-semibold">Gestionar Evaluaciones</span>
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -66,25 +46,11 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="gap-6 max-w-4xl mx-auto">
               <Link to="/student">
                 <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <GraduationCap className="h-8 w-8" />
                   <span className="font-semibold">Mis Materias</span>
-                </Button>
-              </Link>
-              
-              <Link to="/student">
-                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <FileText className="h-8 w-8" />
-                  <span className="font-semibold">Mis Evaluaciones</span>
-                </Button>
-              </Link>
-              
-              <Link to="/student">
-                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
-                  <TrendingUp className="h-8 w-8" />
-                  <span className="font-semibold">Mis Calificaciones</span>
                 </Button>
               </Link>
             </div>
