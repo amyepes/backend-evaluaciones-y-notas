@@ -9,7 +9,7 @@ import { UserEntity } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
-import type { Role } from '@prisma/client';
+import { Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -118,6 +118,7 @@ export class UserService {
                 contacts: true,
                 subjects: true,
                 studentSubject: true,
+                califications: true,
               },
             },
           },
