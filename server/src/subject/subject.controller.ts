@@ -21,7 +21,6 @@ import { Role } from '@prisma/client';
 
 @Controller('admin/subjects')
 @UseGuards(JwtAuthGuard, RolesGuard)
-// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 @Roles(Role.ADMIN)
 export class SubjectController {
   constructor(private readonly subjectService: SubjectService) {}
