@@ -11,8 +11,62 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import * as bcrypt from 'bcrypt';
 
+// =======================================================
+// Patrón de Diseño: Abstract Factory
+// =======================================================
+
+// 1. Interfaz del Abstract Factory
+// Define un contrato para la creación de los datos de usuario.
+interface IAbstractUserFactory {
+  createUser(data: CreateUserDto): Promise<Prisma.UserCreateInput>;
+}
+
+// 2. Fábricas Concretas
+// Cada clase implementa la lógica de creación para un rol específico.
+class StudentFactory implements IAbstractUserFactory {
+  async createUser(data: CreateUserDto): Promise<Prisma.UserCreateInput> {
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(data.password, salt);
+    return {
+      name: data.name,
+      username: data.username,
+      password: hash,
+      role: Role.STUDENT,
+    };
+  }
+}
+
+class ProfessorFactory implements IAbstractUserFactory {
+  async createUser(data: CreateUserDto): Promise<Prisma.UserCreateInput> {
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(data.password, salt);
+    return {
+      name: data.name,
+      username: data.username,
+      password: hash,
+      role: Role.PROFESSOR,
+    };
+  }
+}
+
+class AdminFactory implements IAbstractUserFactory {
+  async createUser(data: CreateUserDto): Promise<Prisma.UserCreateInput> {
+    const salt = await bcrypt.genSalt();
+    const hash = await bcrypt.hash(data.password, salt);
+    return {
+      name: data.name,
+      username: data.username,
+      password: hash,
+      role: Role.ADMIN,
+    };
+  }
+}
+
+// =======================================================
+// UserService (El cliente del patrón)
+// =======================================================
+
 // Definimos un tipo para el usuario sin la contraseña, para una mayor seguridad.
-// Incluimos las relaciones que existen en el esquema.
 type UserWithoutPassword = Omit<UserPrisma, 'password'> & {
   studentSubject?: Prisma.StudentSubjectDefaultArgs;
   califications?: Prisma.CalificationDefaultArgs;
@@ -45,29 +99,43 @@ export class UserService {
           username: body.username,
         },
       });
-      if (validation) throw new BadRequestException('Este usuario ya está en uso');
+      if (validation) {
+        throw new BadRequestException('Este usuario ya está en uso');
+      }
 
-      const salt = await bcrypt.genSalt();
-      const hash = await bcrypt.hash(body.password, salt);
+      // Elige la fábrica correcta según el rol del cuerpo.
+      let factory: IAbstractUserFactory;
+      switch (body.role) {
+        case Role.STUDENT:
+          factory = new StudentFactory();
+          break;
+        case Role.PROFESSOR:
+          factory = new ProfessorFactory();
+          break;
+        case Role.ADMIN:
+          factory = new AdminFactory();
+          break;
+        default:
+          factory = new StudentFactory(); // Rol por defecto
+          break;
+      }
+
+      // La fábrica crea y devuelve los datos del nuevo usuario, con la contraseña hasheada.
+      const userData = await factory.createUser(body);
 
       const newUser = await this.prisma.user.create({
-        data: {
-          name: body.name,
-          username: body.username,
-          password: hash,
-          role: body.role || Role.STUDENT, // El rol por defecto es STUDENT
-        },
+        data: userData,
       });
 
-      // Desestructuramos el objeto para eliminar la contraseña antes de devolverlo.
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = newUser;
       return result;
     } catch (error) {
-      if (error instanceof BadRequestException)
+      if (error instanceof BadRequestException) {
         throw new BadRequestException(error.message);
-      if (error instanceof Error)
+      }
+      if (error instanceof Error) {
         throw new InternalServerErrorException(error.message);
+      }
     }
   }
 
@@ -88,8 +156,6 @@ export class UserService {
         throw new NotFoundException('User not found');
       }
 
-      // Desestructuramos el objeto para eliminar la contraseña y devolvemos el resultado tipado.
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result as UserWithoutPassword;
     } catch (error) {
@@ -197,7 +263,6 @@ export class UserService {
         data: updateData,
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = updatedUser;
       return result;
     } catch (error) {
@@ -221,8 +286,6 @@ export class UserService {
 
       if (!user) throw new NotFoundException('Usuario no encontrado');
 
-      // Eliminamos la validación de 'contacts' ya que no existe en el esquema.
-      // Verificamos si tiene datos relacionados para evitar la eliminación en cascada accidental.
       if (user.subjects.length > 0 || user.studentSubject.length > 0 || user.califications.length > 0) {
         throw new BadRequestException(
           'No se puede eliminar el usuario porque tiene datos relacionados'
@@ -349,7 +412,6 @@ export class UserService {
         throw new NotFoundException('Usuario no encontrado');
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result as UserWithoutPassword;
     } catch (error) {
