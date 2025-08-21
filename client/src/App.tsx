@@ -5,6 +5,7 @@ import RegisterPage from "./pages/RegisterPage";
 import AdminDashboard from "./admin/pages/AdminDashboard";
 import UsersPage from "./admin/pages/UsersPage";
 import SubjectsPage from "./admin/pages/SubjectsPage";
+import SubjectDetailsPage from "./admin/pages/SubjectDetailsPage";
 import AdminStatsPage from "./admin/pages/AdminStatsPage";
 import QuizzesPage from "./admin/pages/QuizzesPage";
 import GradingPage from "./admin/pages/GradingPage";
@@ -35,6 +36,11 @@ export default function App() {
         <Route path="/admin/subjects" element={
           <ProtectedRoute>
             <SubjectsPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/subjects/:id" element={
+          <ProtectedRoute>
+            <SubjectDetailsPage />
           </ProtectedRoute>
         } />
         <Route path="/admin/stats" element={
