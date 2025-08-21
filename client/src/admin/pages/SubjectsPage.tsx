@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Search, Filter } from "lucide-react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useSubjects, useSubjectActions } from "../hooks/useSubjects";
+import { subjectService } from "../services/subject-service";
 import type { Subject } from "../services/subject-service";
 import SubjectList from "../components/SubjectList";
 import SubjectForm from "../components/SubjectForm"; 
 import SubjectStats from "../components/SubjectStats";
+import toast from "react-hot-toast";
 
 export default function SubjectsPage() {
   const navigate = useNavigate();
-  const [showForm, setShowForm] = useState(false);
+  const { id } = useParams();
+  const isEditMode = Boolean(id);
+  
+  const [showForm, setShowForm] = useState(isEditMode);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+  const [loadingSubject, setLoadingSubject] = useState(isEditMode);
   const [searchTerm, setSearchTerm] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1); 
@@ -24,6 +30,26 @@ export default function SubjectsPage() {
   });
 
   const { createSubject, updateSubject, deleteSubject, loading: actionLoading } = useSubjectActions();
+
+  // Load subject for editing when in edit mode
+  useEffect(() => {
+    const loadSubjectForEdit = async () => {
+      if (isEditMode && id) {
+        setLoadingSubject(true);
+        try {
+          const subject = await subjectService.getSubjectById(parseInt(id));
+          setEditingSubject(subject);
+        } catch {
+          toast.error("Error al cargar la materia");
+          navigate("/admin/subjects");
+        } finally {
+          setLoadingSubject(false);
+        }
+      }
+    };
+
+    loadSubjectForEdit();
+  }, [isEditMode, id, navigate]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,9 +76,15 @@ export default function SubjectsPage() {
     if (!editingSubject) return;
     try {
       await updateSubject(editingSubject.id, subjectData);
-      setShowForm(false);
-      setEditingSubject(null);
-      refetch();
+      if (isEditMode) {
+        // If in edit mode, redirect back to subject details
+        navigate(`/admin/subjects/${editingSubject.id}`);
+      } else {
+        // If in regular mode, just close form and refresh
+        setShowForm(false);
+        setEditingSubject(null);
+        refetch();
+      }
     } catch {
       // Error handled by hook
     }
@@ -89,6 +121,14 @@ export default function SubjectsPage() {
   };
 
   if (showForm) {
+    if (loadingSubject) {
+      return (
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -96,13 +136,17 @@ export default function SubjectsPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setShowForm(false);
-                setEditingSubject(null);
+                if (isEditMode) {
+                  navigate(`/admin/subjects/${id}`);
+                } else {
+                  setShowForm(false);
+                  setEditingSubject(null);
+                }
               }}
               className="mb-4"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Volver a la lista
+              {isEditMode ? "Volver a detalles" : "Volver a la lista"}
             </Button>
             <h1 className="text-2xl font-bold text-gray-900">
               {editingSubject ? "Editar Materia" : "Crear Nueva Materia"}
@@ -113,8 +157,12 @@ export default function SubjectsPage() {
             subject={editingSubject}
             onSubmit={editingSubject ? handleUpdateSubject : handleCreateSubject}
             onCancel={() => {
-              setShowForm(false);
-              setEditingSubject(null);
+              if (isEditMode) {
+                navigate(`/admin/subjects/${id}`);
+              } else {
+                setShowForm(false);
+                setEditingSubject(null);
+              }
             }}
             loading={actionLoading}
           />
