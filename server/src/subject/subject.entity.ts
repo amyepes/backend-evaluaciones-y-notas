@@ -1,13 +1,17 @@
-export interface SubjectEntity {
+import { Role } from '@prisma/client';
+
+export class SubjectEntity {
   id: number;
   name: string;
   professorId: number;
   createdAt: Date;
+  
+  // Optional relations
   professor?: {
     id: number;
     name: string;
     username: string;
-    role: string;
+    role: Role;
   };
   studentSubject?: Array<{
     id: number;
@@ -17,10 +21,12 @@ export interface SubjectEntity {
       name: string;
       username: string;
     };
+    createdAt: Date;
   }>;
   quizzes?: Array<{
     id: number;
     name: string;
+    createdAt: Date;
   }>;
   _count?: {
     studentSubject: number;

@@ -16,19 +16,13 @@ import * as bcrypt from 'bcrypt';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findOneUser(username: string): Promise<UserEntity | null | undefined> {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          username,
-        },
-      });
-      if (user) return user;
-      return null;
-    } catch (error) {
-      if (error instanceof Error)
-        throw new InternalServerErrorException(error.message);
-    }
+  async findOneUser(username: string): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        username,
+      },
+    });
+    return user;
   }
 
   async createUser(body: CreateUserDto): Promise<UserEntity | undefined> {
@@ -68,7 +62,9 @@ export class UserService {
           id: userId,
         },
         include: {
-          contacts: true,
+          subjects: true,
+          studentSubject: true,
+          califications: true,
         },
       });
       if (!user) throw new NotFoundException('User not found');
@@ -85,11 +81,11 @@ export class UserService {
 
   async getAllUsers(query: UserQueryDto) {
     try {
-      const page = parseInt(query.page || '1');
-      const limit = parseInt(query.limit || '10');
+      const page = Math.max(1, parseInt(query.page || '1'));
+      const limit = Math.min(100, Math.max(1, parseInt(query.limit || '10')));
       const skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, any> = {};
       
       if (query.search) {
         where.OR = [
@@ -115,7 +111,6 @@ export class UserService {
             createdAt: true,
             _count: {
               select: {
-                contacts: true,
                 subjects: true,
                 studentSubject: true,
                 califications: true,
@@ -134,6 +129,8 @@ export class UserService {
           page,
           limit,
           totalPages: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1,
         },
       };
     } catch (error) {
@@ -160,7 +157,7 @@ export class UserService {
         }
       }
 
-      const updateData: any = {
+      const updateData: Record<string, any> = {
         ...body,
       };
 
@@ -191,7 +188,6 @@ export class UserService {
       const user = await this.prisma.user.findUnique({
         where: { id },
         include: {
-          contacts: true,
           subjects: true,
           studentSubject: true,
           califications: true,
@@ -201,10 +197,10 @@ export class UserService {
       if (!user) throw new NotFoundException('Usuario no encontrado');
 
       // Check if user has related data
-      if (user.contacts.length > 0 || user.subjects.length > 0 || 
+      if (user.subjects.length > 0 || 
           user.studentSubject.length > 0 || user.califications.length > 0) {
         throw new BadRequestException(
-          'No se puede eliminar el usuario porque tiene datos relacionados'
+          'No se puede eliminar el usuario porque tiene datos relacionados (materias, inscripciones o calificaciones)'
         );
       }
 
@@ -218,6 +214,7 @@ export class UserService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -237,6 +234,115 @@ export class UserService {
 
       return users;
     } catch (error) {
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async getUserStats() {
+    try {
+      const [totalUsers, adminCount, professorCount, studentCount] = await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.user.count({ where: { role: Role.ADMIN } }),
+        this.prisma.user.count({ where: { role: Role.PROFESSOR } }),
+        this.prisma.user.count({ where: { role: Role.STUDENT } }),
+      ]);
+
+      return {
+        total: totalUsers,
+        byRole: {
+          admin: adminCount,
+          professor: professorCount,
+          student: studentCount,
+        },
+      };
+    } catch (error) {
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async changeUserPassword(id: number, newPassword: string): Promise<{ message: string }> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!user) throw new NotFoundException('Usuario no encontrado');
+
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      await this.prisma.user.update({
+        where: { id },
+        data: { password: hashedPassword },
+      });
+
+      return { message: 'Contraseña actualizada exitosamente' };
+    } catch (error) {
+      if (error instanceof NotFoundException)
+        throw error;
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
+    }
+  }
+
+  async getUserWithRelations(id: number) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          subjects: {
+            select: {
+              id: true,
+              name: true,
+              createdAt: true,
+            },
+          },
+          studentSubject: {
+            include: {
+              subject: {
+                select: {
+                  id: true,
+                  name: true,
+                  professor: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          califications: {
+            include: {
+              quiz: {
+                select: {
+                  id: true,
+                  name: true,
+                  subject: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) throw new NotFoundException('Usuario no encontrado');
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      return result;
+    } catch (error) {
+      if (error instanceof NotFoundException)
+        throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
     }
