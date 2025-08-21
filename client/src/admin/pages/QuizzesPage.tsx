@@ -1,0 +1,317 @@
+import { useState } from "react";
+import { useAppContext } from "@/context/useAppContext";
+import NavComponent from "@/components/NavComponent";
+import { Button } from "@/components/ui/button";
+import { 
+  FileText, 
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  BookOpen,
+  Calendar,
+  Award
+} from "lucide-react"; 
+import { useQuizzes } from "../hooks/useQuizzes";
+import QuizForm from "../components/QuizForm";
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+export default function QuizzesPage() {
+  const { user } = useAppContext();
+  const [showForm, setShowForm] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState<{ id: number; name: string; subjectId: number } | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { quizzes, loading, createQuiz, updateQuiz, deleteQuiz } = useQuizzes({
+    page: currentPage.toString(),
+    search: searchTerm,
+  });
+
+  if (user?.role !== "ADMIN") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Acceso Denegado</h1>
+          <p className="text-gray-600">No tienes permisos para acceder a esta sección.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const handleCreateQuiz = async (quizData: { name: string; subjectId: number }) => {
+    const success = await createQuiz(quizData);
+    if (success) {
+      setShowForm(false);
+    }
+  };
+
+  const handleUpdateQuiz = async (quizData: { name?: string; subjectId?: number }) => {
+    if (editingQuiz) {
+      const success = await updateQuiz(editingQuiz.id, quizData);
+      if (success) {
+        setEditingQuiz(null);
+        setShowForm(false);
+      }
+    }
+  };
+
+  const handleDeleteQuiz = async (quizId: number) => {
+    const success = await deleteQuiz(quizId);
+    if (success && currentPage > 1 && quizzes?.quizzes.length === 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleEdit = (quiz: { id: number; name: string; subjectId: number }) => {
+    setEditingQuiz(quiz);
+    setShowForm(true);
+  };
+
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingQuiz(null);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <NavComponent />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <FileText className="h-12 w-12 mr-4" />
+                <div>
+                  <h1 className="text-3xl font-bold">Gestión de Evaluaciones</h1>
+                  <p className="text-purple-100 mt-2">
+                    Administra las evaluaciones del sistema educativo.
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={() => setShowForm(true)}
+                className="bg-white text-purple-600 hover:bg-gray-100"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nueva Evaluación
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Buscar evaluaciones..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quizzes List */}
+        <div className="bg-white rounded-lg shadow-md">
+          {loading ? (
+            <div className="p-6">
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : quizzes && quizzes.quizzes.length > 0 ? (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Evaluación
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Materia
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Profesor
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Calificaciones
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Fecha
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Acciones
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {quizzes.quizzes.map((quiz) => (
+                      <tr key={quiz.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <FileText className="h-5 w-5 text-purple-600 mr-3" />
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {quiz.name}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <BookOpen className="h-4 w-4 text-green-600 mr-2" />
+                            <div className="text-sm text-gray-900">
+                              {quiz.subject.name}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {quiz.subject.professor.name}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Award className="h-4 w-4 text-orange-600 mr-2" />
+                            <div className="text-sm text-gray-900">
+                              {quiz._count.califications}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                            <div className="text-sm text-gray-900">
+                              {new Date(quiz.createdAt).toLocaleDateString('es-ES')}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(quiz)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm">
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Eliminar evaluación?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará permanentemente la evaluación "{quiz.name}".
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteQuiz(quiz.id)}
+                                    className="bg-red-600 hover:bg-red-700"
+                                  >
+                                    Eliminar
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {quizzes.pagination.totalPages > 1 && (
+                <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                  <div className="flex-1 flex justify-between items-center">
+                    <p className="text-sm text-gray-700">
+                      Mostrando página {quizzes.pagination.page} de {quizzes.pagination.totalPages}
+                      {" "}({quizzes.pagination.total} evaluaciones en total)
+                    </p>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(currentPage - 1)}
+                        disabled={!quizzes.pagination.hasPrev}
+                      >
+                        Anterior
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setCurrentPage(currentPage + 1)}
+                        disabled={!quizzes.pagination.hasNext}
+                      >
+                        Siguiente
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="p-8 text-center">
+              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No se encontraron evaluaciones
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {searchTerm ? "No hay evaluaciones que coincidan con tu búsqueda." : "Comienza creando tu primera evaluación."}
+              </p>
+              {!searchTerm && (
+                <Button onClick={() => setShowForm(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nueva Evaluación
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Quiz Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+              <QuizForm
+                quiz={editingQuiz}
+                onSubmit={editingQuiz ? handleUpdateQuiz : handleCreateQuiz}
+                onCancel={handleCloseForm}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -84,38 +84,23 @@ export interface StudentSubjectsResponse {
 }
 
 class StudentService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   async getMySubjects(): Promise<StudentSubjectsResponse> {
-    const response = await apiClient.get("/student/my-subjects", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/student/my-subjects");
     return response.data;
   }
 
   async getSubjectQuizzes(subjectId: number): Promise<SubjectQuizzesResponse> {
-    const response = await apiClient.get(`/student/subject/${subjectId}/quizzes`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/student/subject/${subjectId}/quizzes`);
     return response.data;
   }
 
   async getMyGrades(): Promise<StudentGradesResponse> {
-    const response = await apiClient.get("/student/my-grades", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/student/my-grades");
     return response.data;
   }
 
   async getSubjectStats(subjectId: number) {
-    const response = await apiClient.get(`/student/subject/${subjectId}/stats`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/student/subject/${subjectId}/stats`);
     return response.data;
   }
 }

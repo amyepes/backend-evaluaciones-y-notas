@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { subjectService, Subject, SubjectQueryParams, SubjectsResponse, SubjectStats } from "../services/subject-service";
+import { subjectService, type Subject, type SubjectQueryParams, type SubjectsResponse, type SubjectStats } from "../services/subject-service";
 import toast from "react-hot-toast";
-
+import type { AxiosError } from "axios";
+  
 export const useSubjects = (params: SubjectQueryParams = {}) => {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [pagination, setPagination] = useState({
@@ -22,8 +23,15 @@ export const useSubjects = (params: SubjectQueryParams = {}) => {
       const response: SubjectsResponse = await subjectService.getAllSubjects(queryParams);
       setSubjects(response.subjects);
       setPagination(response.pagination);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al cargar materias";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+          (axiosError.response?.data &&
+            typeof axiosError.response.data === "object" &&
+            "message" in axiosError.response.data
+                  ? (axiosError.response.data as { message?: string }).message
+                  : undefined) ||
+          "Error al cargar materias";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -55,8 +63,15 @@ export const useSubjectStats = () => {
     try {
       const response = await subjectService.getSubjectStats();
       setStats(response);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al cargar estadísticas";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al cargar estadísticas";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -79,14 +94,21 @@ export const useSubjectStats = () => {
 export const useSubjectActions = () => {
   const [loading, setLoading] = useState(false);
 
-  const createSubject = async (subjectData: any) => {
+    const createSubject = async (subjectData: { name: string; professorId: number }) => {
     setLoading(true);
     try {
       const newSubject = await subjectService.createSubject(subjectData);
       toast.success("Materia creada exitosamente");
       return newSubject;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al crear materia";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al crear materia";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -94,14 +116,21 @@ export const useSubjectActions = () => {
     }
   };
 
-  const updateSubject = async (id: number, subjectData: any) => {
+  const updateSubject = async (id: number, subjectData: { name?: string; professorId?: number }) => {
     setLoading(true);
     try {
       const updatedSubject = await subjectService.updateSubject(id, subjectData);
       toast.success("Materia actualizada exitosamente");
       return updatedSubject;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al actualizar materia";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al actualizar materia";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -115,8 +144,15 @@ export const useSubjectActions = () => {
       await subjectService.deleteSubject(id);
       toast.success("Materia eliminada exitosamente");
       return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al eliminar materia";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al eliminar materia";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -130,8 +166,15 @@ export const useSubjectActions = () => {
       await subjectService.assignStudentToSubject(subjectId, studentId);
       toast.success("Estudiante asignado exitosamente");
       return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al asignar estudiante";
+      } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al asignar estudiante";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -145,8 +188,15 @@ export const useSubjectActions = () => {
       await subjectService.removeStudentFromSubject(subjectId, studentId);
       toast.success("Estudiante removido exitosamente");
       return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al remover estudiante";
+      } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al remover estudiante";
       toast.error(errorMessage);
       throw err;
     } finally {

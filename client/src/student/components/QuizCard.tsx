@@ -1,5 +1,5 @@
 import { Calendar, CheckCircle, Clock, AlertCircle } from "lucide-react";
-import { SubjectQuiz } from "../services/student-service";
+import type { SubjectQuiz } from "../services/student-service";
 
 interface QuizCardProps {
   quiz: SubjectQuiz;

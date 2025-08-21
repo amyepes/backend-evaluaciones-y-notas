@@ -56,13 +56,6 @@ export interface UserStats {
 }
 
 class UserService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   async getAllUsers(params: UserQueryParams = {}): Promise<UsersResponse> {
     const queryParams = new URLSearchParams();
     
@@ -71,60 +64,43 @@ class UserService {
     if (params.search) queryParams.append('search', params.search);
     if (params.role) queryParams.append('role', params.role);
 
-    const response = await apiClient.get(`/admin/users?${queryParams.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/users?${queryParams.toString()}`);
     return response.data;
   }
 
   async getUserById(id: number): Promise<User> {
-    const response = await apiClient.get(`/admin/users/${id}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/users/${id}`);
     return response.data;
   }
 
   async createUser(userData: CreateUserDto): Promise<User> {
-    const response = await apiClient.post("/admin/users", userData, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.post("/admin/users", userData);
     return response.data;
   }
 
   async updateUser(id: number, userData: UpdateUserDto): Promise<User> {
-    const response = await apiClient.put(`/admin/users/${id}`, userData, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.put(`/admin/users/${id}`, userData);
     return response.data;
   }
 
   async deleteUser(id: number): Promise<{ message: string }> {
-    const response = await apiClient.delete(`/admin/users/${id}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.delete(`/admin/users/${id}`);
     return response.data;
   }
 
   async getUserStats(): Promise<UserStats> {
-    const response = await apiClient.get("/admin/users/stats/overview", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/admin/users/stats/overview");
     return response.data;
   }
 
   async getUsersByRole(role: string): Promise<User[]> {
-    const response = await apiClient.get(`/admin/users/by-role/${role}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/users/by-role/${role}`);
     return response.data;
   }
 
   async changeUserPassword(id: number, password: string): Promise<{ message: string }> {
     const response = await apiClient.patch(`/admin/users/${id}/password`, 
-      { password }, 
-      {
-        headers: this.getAuthHeaders(),
-      }
+      { password }
     );
     return response.data;
   }

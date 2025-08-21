@@ -4,15 +4,15 @@ import { ArrowLeft, Plus, Search, Filter } from "lucide-react";
 import { Link } from "react-router";
 import { useSubjects, useSubjectActions } from "../hooks/useSubjects";
 import SubjectList from "../components/SubjectList";
-import SubjectForm from "../components/SubjectForm";
+import SubjectForm from "../components/SubjectForm"; 
 import SubjectStats from "../components/SubjectStats";
 
 export default function SubjectsPage() {
   const [showForm, setShowForm] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(null);
+  const [editingSubject, setEditingSubject] = useState<{ id: number; name: string; professorId: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1); 
 
   const { subjects, pagination, loading, refetch } = useSubjects({
     page: currentPage,
@@ -34,24 +34,24 @@ export default function SubjectsPage() {
     });
   };
 
-  const handleCreateSubject = async (subjectData: any) => {
+  const handleCreateSubject = async (subjectData: { name: string; professorId: number }) => {
     try {
       await createSubject(subjectData);
       setShowForm(false);
       refetch();
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
 
-  const handleUpdateSubject = async (subjectData: any) => {
+  const handleUpdateSubject = async (subjectData: { name?: string; professorId?: number }) => {
     if (!editingSubject) return;
     try {
       await updateSubject(editingSubject.id, subjectData);
       setShowForm(false);
       setEditingSubject(null);
       refetch();
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -61,13 +61,13 @@ export default function SubjectsPage() {
       try {
         await deleteSubject(subjectId);
         refetch();
-      } catch (error) {
+      } catch {
         // Error handled by hook
       }
     }
   };
 
-  const handleEditSubject = (subject: any) => {
+  const handleEditSubject = (subject: { id: number; name: string; professorId: number }) => {
     setEditingSubject(subject);
     setShowForm(true);
   };

@@ -27,7 +27,7 @@ export default function ProtectedRoute({ children }: Props) {
         }
 
         setIsAuthenticated(true);
-        login(JSON.parse(userAuth), JSON.parse(token));
+        login(JSON.parse(userAuth), token);
       } else {
         logout();
         localStorage.clear();

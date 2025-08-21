@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { userService, User, UserQueryParams, UsersResponse, UserStats } from "../services/user-service";
+import { userService, type User, type UserQueryParams, type UsersResponse, type UserStats } from "../services/user-service";
 import toast from "react-hot-toast";
+import type { AxiosError } from "axios";
 
 export const useUsers = (params: UserQueryParams = {}) => {
   const [users, setUsers] = useState<User[]>([]);
@@ -22,8 +23,15 @@ export const useUsers = (params: UserQueryParams = {}) => {
       const response: UsersResponse = await userService.getAllUsers(queryParams);
       setUsers(response.users);
       setPagination(response.pagination);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al cargar usuarios";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al cargar usuarios";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -55,8 +63,15 @@ export const useUserStats = () => {
     try {
       const response = await userService.getUserStats();
       setStats(response);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al cargar estadísticas";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) ||
+        "Error al cargar estadísticas";
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -79,14 +94,20 @@ export const useUserStats = () => {
 export const useUserActions = () => {
   const [loading, setLoading] = useState(false);
 
-  const createUser = async (userData: any) => {
+  const createUser = async (userData: { name: string; username: string; role: string; password: string }) => {
     setLoading(true);
     try {
       const newUser = await userService.createUser(userData);
       toast.success("Usuario creado exitosamente");
       return newUser;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al crear usuario";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) || "Error al crear usuario";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -94,14 +115,20 @@ export const useUserActions = () => {
     }
   };
 
-  const updateUser = async (id: number, userData: any) => {
+  const updateUser = async (id: number, userData: { name?: string; role?: string; password?: string }) => {
     setLoading(true);
     try {
       const updatedUser = await userService.updateUser(id, userData);
       toast.success("Usuario actualizado exitosamente");
       return updatedUser;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al actualizar usuario";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) || "Error al actualizar usuario";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -115,8 +142,14 @@ export const useUserActions = () => {
       await userService.deleteUser(id);
       toast.success("Usuario eliminado exitosamente");
       return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al eliminar usuario";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) || "Error al eliminar usuario";
       toast.error(errorMessage);
       throw err;
     } finally {
@@ -130,8 +163,14 @@ export const useUserActions = () => {
       await userService.changeUserPassword(id, password);
       toast.success("Contraseña actualizada exitosamente");
       return true;
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || "Error al cambiar contraseña";
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError;
+      const errorMessage =
+        (axiosError.response?.data &&
+          typeof axiosError.response.data === "object" &&
+          "message" in axiosError.response.data
+            ? (axiosError.response.data as { message?: string }).message
+            : undefined) || "Error al cambiar contraseña";
       toast.error(errorMessage);
       throw err;
     } finally {
