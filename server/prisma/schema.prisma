@@ -14,25 +14,63 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model User{
-  id Int @id @default(autoincrement())
-  name String
-  username String @unique
-  password String
-  createdAt DateTime @default(now())
-  contacts Contact[]
+// ============================
+// ENUMS
+// ============================
+enum Role {
+  ADMIN
+  PROFESSOR
+  STUDENT
 }
 
+// ============================
+// MODELS
+// ============================
+model User {
+  id            Int             @id @default(autoincrement())
+  name          String
+  username      String          @unique
+  password      String
+  role          Role
+  studentSubject StudentSubject[]
+  califications Calification[]
+  subjects      Subject[]
+  createdAt     DateTime        @default(now())
+}
 
-model Contact{
-  id Int @id @default(autoincrement())
-  name String
-  lastname String
-  email String
-  phone String
-  address String
-  userId Int
-  user User @relation(fields: [userId], references: [id])
+model StudentSubject {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  student   User     @relation(fields: [studentId], references: [id])
+  subjectId Int
+  subject   Subject  @relation(fields: [subjectId], references: [id])
   createdAt DateTime @default(now())
 }
 
+model Subject {
+  id             Int             @id @default(autoincrement())
+  name           String
+  professorId    Int
+  professor      User            @relation(fields: [professorId], references: [id])
+  studentSubject StudentSubject[]
+  quizzes        Quiz[]
+  createdAt      DateTime        @default(now())
+}
+
+model Quiz {
+  id           Int            @id @default(autoincrement())
+  name         String
+  subjectId    Int
+  subject      Subject        @relation(fields: [subjectId], references: [id])
+  califications Calification[]
+  createdAt    DateTime       @default(now())
+}
+
+model Calification {
+  id        Int     @id @default(autoincrement())
+  studentId Int
+  student   User    @relation(fields: [studentId], references: [id])
+  quizId    Int
+  quiz      Quiz    @relation(fields: [quizId], references: [id])
+  grade     Int
+}
