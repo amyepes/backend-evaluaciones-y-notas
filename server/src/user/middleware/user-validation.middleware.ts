@@ -1,4 +1,5 @@
 import { Injectable, NestMiddleware, BadRequestException } from '@nestjs/common';
+import { USERNAMEE } from 'config/config';
 import { Request, Response, NextFunction } from 'express';
 
 // Definimos la interfaz del manejador.
@@ -25,8 +26,8 @@ export class UsernameValidationHandler implements IValidationHandler {
 
   handle(req: Request, res: Response, next: NextFunction): void {
     const { username } = req.body;
-    // Lógica de validación simulada. En un caso real, consultarías la base de datos.
-    if (username === 'existing_user') {
+    // Lógica de validación.
+    if (username === USERNAMEE) {
       throw new BadRequestException('El nombre de usuario ya está en uso');
     }
     
@@ -54,7 +55,7 @@ export class PasswordValidationHandler implements IValidationHandler {
 
   handle(req: Request, res: Response, next: NextFunction): void {
     const { password } = req.body;
-    // Lógica de validación de contraseña simulada.
+    // Lógica de validación de contraseña.
     if (password.length < 8) {
       throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
     }
