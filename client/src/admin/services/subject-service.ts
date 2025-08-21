@@ -72,13 +72,6 @@ export interface StudentAssignment {
 }
 
 class SubjectService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   async getAllSubjects(params: SubjectQueryParams = {}): Promise<SubjectsResponse> {
     const queryParams = new URLSearchParams();
     
@@ -87,79 +80,57 @@ class SubjectService {
     if (params.search) queryParams.append('search', params.search);
     if (params.professorId) queryParams.append('professorId', params.professorId.toString());
 
-    const response = await apiClient.get(`/admin/subjects?${queryParams.toString()}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/subjects?${queryParams.toString()}`);
     return response.data;
   }
 
   async getSubjectById(id: number): Promise<Subject> {
-    const response = await apiClient.get(`/admin/subjects/${id}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/subjects/${id}`);
     return response.data;
   }
 
   async createSubject(subjectData: CreateSubjectDto): Promise<Subject> {
-    const response = await apiClient.post("/admin/subjects", subjectData, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.post("/admin/subjects", subjectData);
     return response.data;
   }
 
   async updateSubject(id: number, subjectData: UpdateSubjectDto): Promise<Subject> {
-    const response = await apiClient.put(`/admin/subjects/${id}`, subjectData, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.put(`/admin/subjects/${id}`, subjectData);
     return response.data;
   }
 
   async deleteSubject(id: number): Promise<{ message: string }> {
-    const response = await apiClient.delete(`/admin/subjects/${id}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.delete(`/admin/subjects/${id}`);
     return response.data;
   }
 
   async getSubjectStats(): Promise<SubjectStats> {
-    const response = await apiClient.get("/admin/subjects/stats/overview", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/admin/subjects/stats/overview");
     return response.data;
   }
 
   async getSubjectsByProfessor(professorId: number) {
-    const response = await apiClient.get(`/admin/subjects/professor/${professorId}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/subjects/professor/${professorId}`);
     return response.data;
   }
 
   async getSubjectStudents(subjectId: number) {
-    const response = await apiClient.get(`/admin/subjects/${subjectId}/students`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/subjects/${subjectId}/students`);
     return response.data;
   }
 
   async assignStudentToSubject(subjectId: number, studentId: number): Promise<StudentAssignment> {
-    const response = await apiClient.post(`/admin/subjects/${subjectId}/students/${studentId}`, {}, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.post(`/admin/subjects/${subjectId}/students/${studentId}`, {});
     return response.data;
   }
 
   async removeStudentFromSubject(subjectId: number, studentId: number): Promise<{ message: string }> {
-    const response = await apiClient.delete(`/admin/subjects/${subjectId}/students/${studentId}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.delete(`/admin/subjects/${subjectId}/students/${studentId}`);
     return response.data;
   }
 
   async searchSubjects(searchTerm: string, limit: number = 10): Promise<Subject[]> {
-    const response = await apiClient.get(`/admin/subjects/search/${searchTerm}?limit=${limit}`, {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get(`/admin/subjects/search/${searchTerm}?limit=${limit}`);
     return response.data;
   }
 }

@@ -9,11 +9,11 @@ import UserStats from "../components/UserStats";
 
 export default function UsersPage() {
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
+  const [editingUser, setEditingUser] = useState<{ id: number; name: string; username: string; role: string } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-
+ 
   const { users, pagination, loading, refetch } = useUsers({
     page: currentPage,
     limit: 10,
@@ -34,24 +34,24 @@ export default function UsersPage() {
     });
   };
 
-  const handleCreateUser = async (userData: any) => {
+  const handleCreateUser = async (userData: { name: string; username: string; role: string; password: string }) => {
     try {
       await createUser(userData);
       setShowForm(false);
       refetch();
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
 
-  const handleUpdateUser = async (userData: any) => {
+  const handleUpdateUser = async (userData: { name?: string; role?: string; password?: string }) => {
     if (!editingUser) return;
     try {
       await updateUser(editingUser.id, userData);
       setShowForm(false);
       setEditingUser(null);
       refetch();
-    } catch (error) {
+    } catch {
       // Error handled by hook
     }
   };
@@ -61,13 +61,13 @@ export default function UsersPage() {
       try {
         await deleteUser(userId);
         refetch();
-      } catch (error) {
+      } catch {
         // Error handled by hook
       }
     }
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: { id: number; name: string; username: string; role: string }) => {
     setEditingUser(user);
     setShowForm(true);
   };
@@ -105,7 +105,7 @@ export default function UsersPage() {
           
           <UserForm
             user={editingUser}
-            onSubmit={editingUser ? handleUpdateUser : handleCreateUser}
+            onSubmit={editingUser ? handleUpdateUser : handleCreateUser as any}
             onCancel={() => {
               setShowForm(false);
               setEditingUser(null);

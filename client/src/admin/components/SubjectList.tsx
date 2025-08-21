@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ChevronLeft, ChevronRight, Users } from "lucide-react";
-import { Subject } from "../services/subject-service";
+import type { Subject } from "../services/subject-service"; 
 
 interface SubjectListProps {
   subjects: Subject[];

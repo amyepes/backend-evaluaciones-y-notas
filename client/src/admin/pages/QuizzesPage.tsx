@@ -29,7 +29,7 @@ import {
 export default function QuizzesPage() {
   const { user } = useAppContext();
   const [showForm, setShowForm] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState<any>(null);
+  const [editingQuiz, setEditingQuiz] = useState<{ id: number; name: string; subjectId: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -49,14 +49,14 @@ export default function QuizzesPage() {
     );
   }
 
-  const handleCreateQuiz = async (quizData: any) => {
+  const handleCreateQuiz = async (quizData: { name: string; subjectId: number }) => {
     const success = await createQuiz(quizData);
     if (success) {
       setShowForm(false);
     }
   };
 
-  const handleUpdateQuiz = async (quizData: any) => {
+  const handleUpdateQuiz = async (quizData: { name?: string; subjectId?: number }) => {
     if (editingQuiz) {
       const success = await updateQuiz(editingQuiz.id, quizData);
       if (success) {
@@ -73,7 +73,7 @@ export default function QuizzesPage() {
     }
   };
 
-  const handleEdit = (quiz: any) => {
+  const handleEdit = (quiz: { id: number; name: string; subjectId: number }) => {
     setEditingQuiz(quiz);
     setShowForm(true);
   };

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { User } from "../services/user-service";
+import type { User } from "../services/user-service";
 
 interface UserListProps {
   users: User[];
@@ -8,7 +8,7 @@ interface UserListProps {
     total: number;
     page: number;
     limit: number;
-    totalPages: number;
+    totalPages: number; 
     hasNext: boolean;
     hasPrev: boolean;
   };

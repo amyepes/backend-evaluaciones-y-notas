@@ -9,7 +9,7 @@ import SubjectStats from "../components/SubjectStats";
 
 export default function SubjectsPage() {
   const [showForm, setShowForm] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(null);
+  const [editingSubject, setEditingSubject] = useState<{ id: number; name: string; professorId: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1); 
@@ -34,18 +34,26 @@ export default function SubjectsPage() {
     });
   };
 
-  const handleCreateSubject = async (subjectData: any) => {
+  const handleCreateSubject = async (subjectData: { name: string; professorId: number }) => {
+    try {
       await createSubject(subjectData);
       setShowForm(false);
       refetch();
+    } catch {
+      // Error handled by hook
+    }
   };
 
-  const handleUpdateSubject = async (subjectData: any) => {
+  const handleUpdateSubject = async (subjectData: { name?: string; professorId?: number }) => {
     if (!editingSubject) return;
+    try {
       await updateSubject(editingSubject.id, subjectData);
       setShowForm(false);
       setEditingSubject(null);
       refetch();
+    } catch {
+      // Error handled by hook
+    }
   };
 
   const handleDeleteSubject = async (subjectId: number) => {
@@ -53,13 +61,13 @@ export default function SubjectsPage() {
       try {
         await deleteSubject(subjectId);
         refetch();
-      } catch (error) {
+      } catch {
         // Error handled by hook
       }
     }
   };
 
-  const handleEditSubject = (subject: any) => {
+  const handleEditSubject = (subject: { id: number; name: string; professorId: number }) => {
     setEditingSubject(subject);
     setShowForm(true);
   };

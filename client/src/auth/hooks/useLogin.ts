@@ -11,8 +11,8 @@ export const useLogin = () => {
   const loginUser = async (username: string, password: string) => {
     try {
       const {data} = await loginMethod(username, password);
-      login(data.user, data.token);
-      localStorage.setItem("token", JSON.stringify(data.access_token));
+      login(data.user, data.access_token);
+      localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
       toast.success("Bienvenido");
       navigate("/");

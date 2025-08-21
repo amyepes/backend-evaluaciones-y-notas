@@ -4,8 +4,12 @@ import { X, FileText } from "lucide-react";
 import { useSubjects } from "../hooks/useSubjects"; 
 
 interface QuizFormProps {
-  quiz?: any;
-  onSubmit: (data: any) => void;
+  quiz?: {
+    id?: number;
+    name?: string;
+    subjectId?: number;
+  } | null;
+  onSubmit: (data: { name: string; subjectId: number }) => void;
   onCancel: () => void;
 }
 
@@ -17,7 +21,7 @@ export default function QuizForm({ quiz, onSubmit, onCancel }: QuizFormProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const { subjects } = useSubjects({ limit: "100" });
+  const { subjects } = useSubjects({ limit: 100 });
 
   useEffect(() => {
     if (quiz) {

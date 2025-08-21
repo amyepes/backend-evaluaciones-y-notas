@@ -29,7 +29,7 @@ import {
 export default function GradingPage() {
   const { user } = useAppContext();
   const [showForm, setShowForm] = useState(false);
-  const [editingCalification, setEditingCalification] = useState<any>(null);
+  const [editingCalification, setEditingCalification] = useState<{ id: number; studentId: number; quizId: number; grade: number } | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -49,14 +49,14 @@ export default function GradingPage() {
     );
   }
 
-  const handleCreateCalification = async (calificationData: any) => {
+  const handleCreateCalification = async (calificationData: { studentId: number; quizId: number; grade: number }) => {
     const success = await createCalification(calificationData);
     if (success) {
       setShowForm(false);
     }
   };
 
-  const handleUpdateCalification = async (calificationData: any) => {
+  const handleUpdateCalification = async (calificationData: { grade?: number }) => {
     if (editingCalification) {
       const success = await updateCalification(editingCalification.id, calificationData);
       if (success) {
@@ -73,7 +73,7 @@ export default function GradingPage() {
     }
   };
 
-  const handleEdit = (calification: any) => {
+  const handleEdit = (calification: { id: number; studentId: number; quizId: number; grade: number }) => {
     setEditingCalification(calification);
     setShowForm(true);
   };

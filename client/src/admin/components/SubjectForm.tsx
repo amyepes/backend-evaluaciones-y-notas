@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Subject } from "../services/subject-service";
+import type { Subject } from "../services/subject-service";
 import { userService } from "../services/user-service";
 
 interface SubjectFormProps {
   subject?: Subject | null;
-  onSubmit: (subjectData: any) => void;
+  onSubmit: (subjectData: { name: string; professorId: number }) => void;
   onCancel: () => void;
   loading: boolean;
 }
@@ -16,9 +16,9 @@ export default function SubjectForm({ subject, onSubmit, onCancel, loading }: Su
     professorId: subject?.professorId || "",
   });
 
-  const [professors, setProfessors] = useState<any[]>([]);
+  const [professors, setProfessors] = useState<{ id: number; name: string; username: string }[]>([]);
   const [loadingProfessors, setLoadingProfessors] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({}); 
 
   useEffect(() => {
     const fetchProfessors = async () => {

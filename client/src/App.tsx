@@ -7,6 +7,7 @@ import UsersPage from "./admin/pages/UsersPage";
 import SubjectsPage from "./admin/pages/SubjectsPage";
 import AdminStatsPage from "./admin/pages/AdminStatsPage";
 import QuizzesPage from "./admin/pages/QuizzesPage";
+import GradingPage from "./admin/pages/GradingPage";
 import StudentDashboard from "./student/pages/StudentDashboard";
 import SubjectQuizzesPage from "./student/pages/SubjectQuizzesPage";
 import { Toaster } from "react-hot-toast";
@@ -44,6 +45,11 @@ export default function App() {
         <Route path="/admin/quizzes" element={
           <ProtectedRoute>
             <QuizzesPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/grading" element={
+          <ProtectedRoute>
+            <GradingPage />
           </ProtectedRoute>
         } />
         <Route path="/student" element={

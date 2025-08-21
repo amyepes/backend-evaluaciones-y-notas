@@ -62,24 +62,13 @@ export interface MonthlyStats {
 }
 
 class AdminStatsService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem("token");
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  }
-
   async getSystemStats(): Promise<SystemStats> {
-    const response = await apiClient.get("/admin/stats/system", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/admin/stats/system");
     return response.data;
   }
 
   async getMonthlyStats(): Promise<MonthlyStats> {
-    const response = await apiClient.get("/admin/stats/monthly", {
-      headers: this.getAuthHeaders(),
-    });
+    const response = await apiClient.get("/admin/stats/monthly");
     return response.data;
   }
 }

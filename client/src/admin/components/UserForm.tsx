@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { User } from "../services/user-service";
+import type { User } from "../services/user-service";
 
 interface UserFormProps {
   user?: User | null;
-  onSubmit: (userData: any) => void;
+  onSubmit: (userData: { name: string; username?: string; role?: string; password?: string }) => void;
   onCancel: () => void;
   loading: boolean;
 }
@@ -49,7 +49,7 @@ export default function UserForm({ user, onSubmit, onCancel, loading }: UserForm
     if (validateForm()) {
       const submitData = { ...formData };
       if (!submitData.password) {
-        delete submitData.password;
+        delete (submitData as { password?: string }).password;
       }
       onSubmit(submitData);
     }
