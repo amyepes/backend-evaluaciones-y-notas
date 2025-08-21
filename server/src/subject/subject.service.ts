@@ -254,7 +254,7 @@ export class SubjectService {
     }
   }
 
-  async deleteSubject(id: number): Promise<{ message: string }> {
+  async deleteSubject(id: number): Promise<{ message: string } | undefined> {
     try {
       const subject = await this.prisma.subject.findUnique({
         where: { id },
@@ -379,4 +379,5 @@ export class SubjectService {
         throw new InternalServerErrorException(error.message);
     }
   }
+
 }
