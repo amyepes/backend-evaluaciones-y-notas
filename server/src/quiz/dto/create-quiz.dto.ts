@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsNumber, MaxLength, MinLength, IsPositive } from "class-validator";
 
-export class CreateSubjectDto {
+export class CreateQuizDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(2)
@@ -10,5 +10,5 @@ export class CreateSubjectDto {
     @IsNumber()
     @IsNotEmpty()
     @IsPositive()
-    professorId: number;
+    subjectId: number;
 }

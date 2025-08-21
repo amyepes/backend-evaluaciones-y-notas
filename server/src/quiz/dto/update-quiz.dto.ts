@@ -1,6 +1,6 @@
 import { IsOptional, IsString, IsNumber, MaxLength, MinLength, IsPositive } from "class-validator";
 
-export class UpdateSubjectDto {
+export class UpdateQuizDto {
     @IsString()
     @IsOptional()
     @MinLength(2)
@@ -10,5 +10,5 @@ export class UpdateSubjectDto {
     @IsNumber()
     @IsOptional()
     @IsPositive()
-    professorId?: number;
+    subjectId?: number;
 }

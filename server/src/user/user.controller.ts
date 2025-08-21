@@ -9,11 +9,13 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserQueryDto } from './dto/user-query.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
@@ -56,5 +58,23 @@ export class UserController {
   @Delete(':id')
   async deleteUser(@Param('id', ParseIntPipe) id: number) {
     return await this.userService.deleteUser(id);
+  }
+
+  @Get('stats/overview')
+  async getUserStats() {
+    return await this.userService.getUserStats();
+  }
+
+  @Get(':id/relations')
+  async getUserWithRelations(@Param('id', ParseIntPipe) id: number) {
+    return await this.userService.getUserWithRelations(id);
+  }
+
+  @Patch(':id/password')
+  async changeUserPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return await this.userService.changeUserPassword(id, changePasswordDto.password);
   }
 }

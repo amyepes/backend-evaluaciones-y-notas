@@ -1,9 +1,16 @@
+
+import { Role } from '@prisma/client';
+
 export class UserEntity {
   id: number;
   name: string;
   username: string;
   password?: string;
-  role: string;
+  role: Role;
   createdAt: Date;
-  //studentSubject?: Array<{ subjectId: number; studentId: number }>;
+  
+  // Optional relations
+  studentSubject?: any[];
+  califications?: any[];
+  subjects?: any[];
 }

@@ -68,4 +68,28 @@ export class SubjectController {
   ) {
     return await this.subjectService.removeStudentFromSubject(subjectId, studentId);
   }
+
+  @Get('stats/overview')
+  async getSubjectStats() {
+    return await this.subjectService.getSubjectStats();
+  }
+
+  @Get('professor/:professorId')
+  async getSubjectsByProfessor(@Param('professorId', ParseIntPipe) professorId: number) {
+    return await this.subjectService.getSubjectsByProfessor(professorId);
+  }
+
+  @Get(':id/students')
+  async getSubjectStudents(@Param('id', ParseIntPipe) id: number) {
+    return await this.subjectService.getSubjectStudents(id);
+  }
+
+  @Get('search/:searchTerm')
+  async searchSubjects(
+    @Param('searchTerm') searchTerm: string,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNumber = limit ? parseInt(limit) : 10;
+    return await this.subjectService.searchSubjects(searchTerm, limitNumber);
+  }
 }

@@ -17,11 +17,11 @@ export class SubjectService {
 
   async getAllSubjects(query: SubjectQueryDto) {
     try {
-      const page = parseInt(query.page || '1');
-      const limit = parseInt(query.limit || '10');
+      const page = Math.max(1, parseInt(query.page || '1'));
+      const limit = Math.min(100, Math.max(1, parseInt(query.limit || '10')));
       const skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, any> = {};
       
       if (query.search) {
         where.name = { contains: query.search, mode: 'insensitive' };
@@ -64,11 +64,14 @@ export class SubjectService {
           page,
           limit,
           totalPages: Math.ceil(total / limit),
+          hasNext: page * limit < total,
+          hasPrev: page > 1,
         },
       };
     } catch (error) {
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -100,6 +103,7 @@ export class SubjectService {
             select: {
               id: true,
               name: true,
+              createdAt: true,
             },
           },
           _count: {
@@ -119,6 +123,7 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -179,6 +184,7 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -251,6 +257,7 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -283,6 +290,7 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -351,6 +359,7 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
@@ -377,6 +386,181 @@ export class SubjectService {
         throw error;
       if (error instanceof Error)
         throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
+    }
+  }
+
+  async getSubjectStats() {
+    try {
+      const [totalSubjects, totalStudentAssignments, totalQuizzes, subjectsByProfessor] = await Promise.all([
+        this.prisma.subject.count(),
+        this.prisma.studentSubject.count(),
+        this.prisma.quiz.count(),
+        this.prisma.subject.groupBy({
+          by: ['professorId'],
+          _count: {
+            id: true,
+          },
+          orderBy: {
+            _count: {
+              id: 'desc',
+            },
+          },
+        }),
+      ]);
+
+      const avgStudentsPerSubject = totalSubjects > 0 
+        ? Math.round((totalStudentAssignments / totalSubjects) * 100) / 100 
+        : 0;
+
+      const avgQuizzesPerSubject = totalSubjects > 0 
+        ? Math.round((totalQuizzes / totalSubjects) * 100) / 100 
+        : 0;
+
+      return {
+        total: totalSubjects,
+        totalStudentAssignments,
+        totalQuizzes,
+        avgStudentsPerSubject,
+        avgQuizzesPerSubject,
+        subjectsByProfessor: subjectsByProfessor.length,
+      };
+    } catch (error) {
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
+    }
+  }
+
+  async getSubjectsByProfessor(professorId: number) {
+    try {
+      const professor = await this.prisma.user.findUnique({
+        where: { id: professorId },
+        select: { id: true, role: true, name: true },
+      });
+
+      if (!professor) {
+        throw new NotFoundException('Profesor no encontrado');
+      }
+
+      if (professor.role !== Role.PROFESSOR) {
+        throw new BadRequestException('El usuario seleccionado no es un profesor');
+      }
+
+      const subjects = await this.prisma.subject.findMany({
+        where: { professorId },
+        include: {
+          _count: {
+            select: {
+              studentSubject: true,
+              quizzes: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return {
+        professor: {
+          id: professor.id,
+          name: professor.name,
+        },
+        subjects,
+        totalSubjects: subjects.length,
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException)
+        throw error;
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
+    }
+  }
+
+  async getSubjectStudents(subjectId: number) {
+    try {
+      const subject = await this.prisma.subject.findUnique({
+        where: { id: subjectId },
+        select: { id: true, name: true },
+      });
+
+      if (!subject) {
+        throw new NotFoundException('Materia no encontrada');
+      }
+
+      const students = await this.prisma.studentSubject.findMany({
+        where: { subjectId },
+        include: {
+          student: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: {
+          student: {
+            name: 'asc',
+          },
+        },
+      });
+
+      return {
+        subject,
+        students: students.map(ss => ({
+          ...ss.student,
+          assignedAt: ss.createdAt,
+        })),
+        totalStudents: students.length,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException)
+        throw error;
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
+    }
+  }
+
+  async searchSubjects(searchTerm: string, limit: number = 10) {
+    try {
+      const subjects = await this.prisma.subject.findMany({
+        where: {
+          OR: [
+            { name: { contains: searchTerm, mode: 'insensitive' } },
+            { 
+              professor: { 
+                name: { contains: searchTerm, mode: 'insensitive' } 
+              } 
+            },
+          ],
+        },
+        include: {
+          professor: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
+          },
+          _count: {
+            select: {
+              studentSubject: true,
+              quizzes: true,
+            },
+          },
+        },
+        take: limit,
+        orderBy: { name: 'asc' },
+      });
+
+      return subjects;
+    } catch (error) {
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+      throw new InternalServerErrorException('Error interno del servidor');
     }
   }
 
