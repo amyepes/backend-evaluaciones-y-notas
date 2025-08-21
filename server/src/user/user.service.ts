@@ -262,4 +262,132 @@ export class UserService {
         throw new InternalServerErrorException(error.message);
     }
   }
+
+  async getUserStats() {
+    try {
+      const [totalUsers, studentCount, professorCount, adminCount] = await Promise.all([
+        this.prisma.user.count(),
+        this.prisma.user.count({ where: { role: Role.STUDENT } }),
+        this.prisma.user.count({ where: { role: Role.PROFESSOR } }),
+        this.prisma.user.count({ where: { role: Role.ADMIN } }),
+      ]);
+
+      const recentUsers = await this.prisma.user.findMany({
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          role: true,
+          createdAt: true,
+        },
+      });
+
+      return {
+        totalUsers,
+        usersByRole: {
+          students: studentCount,
+          professors: professorCount,
+          admins: adminCount,
+        },
+        recentUsers,
+      };
+    } catch (error) {
+      if (error instanceof Error)
+        throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async getUserWithRelations(id: number): Promise<UserWithoutPassword | undefined> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+        include: {
+          studentSubject: {
+            include: {
+              subject: {
+                select: {
+                  id: true,
+                  name: true,
+                  createdAt: true,
+                },
+              },
+            },
+          },
+          califications: {
+            include: {
+              quiz: {
+                include: {
+                  subject: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          subjects: {
+            select: {
+              id: true,
+              name: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  studentSubject: true,
+                  quizzes: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password, ...result } = user;
+      return result as UserWithoutPassword;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
+
+  async changeUserPassword(id: number, newPassword: string): Promise<{ message: string } | undefined> {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { id },
+      });
+
+      if (!user) {
+        throw new NotFoundException('Usuario no encontrado');
+      }
+
+      const salt = await bcrypt.genSalt();
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      await this.prisma.user.update({
+        where: { id },
+        data: { password: hashedPassword },
+      });
+
+      return { message: 'Contraseña actualizada exitosamente' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      if (error instanceof Error) {
+        throw new InternalServerErrorException(error.message);
+      }
+    }
+  }
 }

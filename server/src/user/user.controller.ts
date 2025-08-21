@@ -32,6 +32,11 @@ export class UserController {
     return await this.userService.getAllUsers(query);
   }
 
+  @Get('stats/overview')
+  async getUserStats() {
+    return await this.userService.getUserStats();
+  }
+
   @Get('by-role/:role')
   async getUsersByRole(@Param('role') role: Role) {
     return await this.userService.getUsersByRole(role);
@@ -40,6 +45,11 @@ export class UserController {
   @Get(':id')
   async getUserById(@Param('id', ParseIntPipe) id: number) {
     return await this.userService.getUserById(id);
+  }
+
+  @Get(':id/relations')
+  async getUserWithRelations(@Param('id', ParseIntPipe) id: number) {
+    return await this.userService.getUserWithRelations(id);
   }
 
   @Post()
@@ -58,16 +68,6 @@ export class UserController {
   @Delete(':id')
   async deleteUser(@Param('id', ParseIntPipe) id: number) {
     return await this.userService.deleteUser(id);
-  }
-
-  @Get('stats/overview')
-  async getUserStats() {
-    return await this.userService.getUserStats();
-  }
-
-  @Get(':id/relations')
-  async getUserWithRelations(@Param('id', ParseIntPipe) id: number) {
-    return await this.userService.getUserWithRelations(id);
   }
 
   @Patch(':id/password')
