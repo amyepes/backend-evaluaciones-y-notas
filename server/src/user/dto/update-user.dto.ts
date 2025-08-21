@@ -1,19 +1,19 @@
 import { IsNotEmpty, IsString, MaxLength, IsEnum, IsOptional } from "class-validator";
 import { Role } from "@prisma/client";
 
-export class CreateUserDto{
+export class UpdateUserDto {
     @IsString()
-    @IsNotEmpty()
+    @IsOptional()
     @MaxLength(50)
-    name: string;
+    name?: string;
 
     @IsString()
-    @IsNotEmpty()
-    username: string;
+    @IsOptional()
+    username?: string;
 
     @IsString()
-    @IsNotEmpty()
-    password: string;
+    @IsOptional()
+    password?: string;
 
     @IsEnum(Role)
     @IsOptional()
