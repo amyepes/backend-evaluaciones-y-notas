@@ -2,15 +2,30 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Award } from "lucide-react";
 import { useQuizzes } from "../hooks/useQuizzes";
-import { userService } from "../services/user-service"; 
+ 
 
 interface CalificationFormProps {
-  calification?: any;
-  onSubmit: (data: any) => void;
+  calification?: {
+    id?: number;
+    studentId?: number;
+    quizId?: number;
+    grade?: number;
+  };
+  quizId?: number;
+  students?: Array<{
+    id: number;
+    name: string;
+    username: string;
+  }>;
+  onSubmit: (data?: {
+    studentId: number;
+    quizId: number;
+    grade: number;
+  }) => void;
   onCancel: () => void;
 }
 
-export default function CalificationForm({ calification, onSubmit, onCancel }: CalificationFormProps) {
+export default function CalificationForm({ calification, quizId, students = [], onSubmit, onCancel }: CalificationFormProps) {
   const [formData, setFormData] = useState({
     studentId: "",
     quizId: "",
@@ -18,22 +33,16 @@ export default function CalificationForm({ calification, onSubmit, onCancel }: C
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [students, setStudents] = useState<any[]>([]);
-
   const { quizzes } = useQuizzes({ limit: "100" });
 
   useEffect(() => {
-    // Load students
-    const loadStudents = async () => {
-      try {
-        const studentUsers = await userService.getUsersByRole("STUDENT");
-        setStudents(studentUsers);
-      } catch (error) {
-        console.error("Error loading students:", error);
-      }
-    };
-    loadStudents();
-  }, []);
+    if (quizId) {
+      setFormData(prev => ({
+        ...prev,
+        quizId: quizId.toString(),
+      }));
+    }
+  }, [quizId]);
 
   useEffect(() => {
     if (calification) {

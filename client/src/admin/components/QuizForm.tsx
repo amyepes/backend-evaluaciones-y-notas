@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { X, FileText } from "lucide-react";
-import { useSubjects } from "../hooks/useSubjects"; 
+import { useSubjects } from "../hooks/useSubjects";
+import type { Subject } from "../services/subject-service"; 
 
 interface QuizFormProps {
   quiz?: {
@@ -11,9 +12,10 @@ interface QuizFormProps {
   } | null;
   onSubmit: (data: { name: string; subjectId: number }) => void;
   onCancel: () => void;
+  defaultSubjectId?: number;
 }
 
-export default function QuizForm({ quiz, onSubmit, onCancel }: QuizFormProps) {
+export default function QuizForm({ quiz, onSubmit, onCancel, defaultSubjectId }: QuizFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     subjectId: "",
@@ -29,8 +31,13 @@ export default function QuizForm({ quiz, onSubmit, onCancel }: QuizFormProps) {
         name: quiz.name || "",
         subjectId: quiz.subjectId?.toString() || "",
       });
+    } else if (defaultSubjectId) {
+      setFormData(prev => ({
+        ...prev,
+        subjectId: defaultSubjectId.toString(),
+      }));
     }
-  }, [quiz]);
+  }, [quiz, defaultSubjectId]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -108,30 +115,45 @@ export default function QuizForm({ quiz, onSubmit, onCancel }: QuizFormProps) {
           )}
         </div>
 
-        <div>
-          <label htmlFor="subjectId" className="block text-sm font-medium text-gray-700 mb-1">
-            Materia *
-          </label>
-          <select
-            id="subjectId"
-            name="subjectId"
-            value={formData.subjectId}
-            onChange={handleInputChange}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-              errors.subjectId ? "border-red-500" : "border-gray-300"
-            }`}
-          >
-            <option value="">Selecciona una materia</option>
-            {subjects?.subjects.map((subject) => (
-              <option key={subject.id} value={subject.id}>
-                {subject.name} - {subject.professor.name}
-              </option>
-            ))}
-          </select>
-          {errors.subjectId && (
-            <p className="text-red-600 text-sm mt-1">{errors.subjectId}</p>
-          )}
-        </div>
+        {/* Subject Selection - Only show if no defaultSubjectId */}
+        {!defaultSubjectId && (
+          <div>
+            <label htmlFor="subjectId" className="block text-sm font-medium text-gray-700 mb-1">
+              Materia *
+            </label>
+            <select
+              id="subjectId"
+              name="subjectId"
+              value={formData.subjectId}
+              onChange={handleInputChange}
+              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                errors.subjectId ? "border-red-500" : "border-gray-300"
+              }`}
+            >
+              <option value="">Selecciona una materia</option>
+              {subjects.map((subject: Subject) => (
+                <option key={subject.id} value={subject.id}>
+                  {subject.name} - {subject.professor?.name || 'Sin profesor'}
+                </option>
+              ))}
+            </select>
+            {errors.subjectId && (
+              <p className="text-red-600 text-sm mt-1">{errors.subjectId}</p>
+            )}
+          </div>
+        )}
+
+        {/* Show selected subject info when defaultSubjectId is provided */}
+        {defaultSubjectId && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Materia
+            </label>
+            <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50">
+              {subjects.find(s => s.id === defaultSubjectId)?.name || 'Materia seleccionada'}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button

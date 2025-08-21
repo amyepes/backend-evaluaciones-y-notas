@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ChevronLeft, ChevronRight, Users } from "lucide-react";
+import { Edit, Trash2, ChevronLeft, ChevronRight, Users, Eye } from "lucide-react";
 import type { Subject } from "../services/subject-service"; 
 
 interface SubjectListProps {
@@ -15,6 +15,7 @@ interface SubjectListProps {
   loading: boolean;
   onEdit: (subject: Subject) => void;
   onDelete: (subjectId: number) => void;
+  onViewDetails: (subjectId: number) => void;
   onPageChange: (page: number) => void;
 }
 
@@ -24,6 +25,7 @@ export default function SubjectList({
   loading, 
   onEdit, 
   onDelete, 
+  onViewDetails,
   onPageChange 
 }: SubjectListProps) {
   if (loading) {
@@ -109,6 +111,14 @@ export default function SubjectList({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => onViewDetails(subject.id)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

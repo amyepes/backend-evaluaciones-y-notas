@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Search, Filter } from "lucide-react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useSubjects, useSubjectActions } from "../hooks/useSubjects";
+import type { Subject } from "../services/subject-service";
 import SubjectList from "../components/SubjectList";
 import SubjectForm from "../components/SubjectForm"; 
 import SubjectStats from "../components/SubjectStats";
 
 export default function SubjectsPage() {
+  const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
-  const [editingSubject, setEditingSubject] = useState<{ id: number; name: string; professorId: number } | null>(null);
+  const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1); 
@@ -67,7 +69,7 @@ export default function SubjectsPage() {
     }
   };
 
-  const handleEditSubject = (subject: { id: number; name: string; professorId: number }) => {
+  const handleEditSubject = (subject: Subject) => {
     setEditingSubject(subject);
     setShowForm(true);
   };
@@ -80,6 +82,10 @@ export default function SubjectsPage() {
       search: searchTerm || undefined,
       professorId: professorFilter ? parseInt(professorFilter) : undefined,
     });
+  };
+
+  const handleViewDetails = (subjectId: number) => {
+    navigate(`/admin/subjects/${subjectId}`);
   };
 
   if (showForm) {
@@ -185,6 +191,7 @@ export default function SubjectsPage() {
           loading={loading}
           onEdit={handleEditSubject}
           onDelete={handleDeleteSubject}
+          onViewDetails={handleViewDetails}
           onPageChange={handlePageChange}
         />
       </div>

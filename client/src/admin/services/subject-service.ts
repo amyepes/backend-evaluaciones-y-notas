@@ -11,6 +11,21 @@ export interface Subject {
     username: string;
     role: string;
   };
+  studentSubject?: Array<{
+    id: number;
+    studentId: number;
+    student: {
+      id: number;
+      name: string;
+      username: string;
+    };
+    createdAt: string;
+  }>;
+  quizzes?: Array<{
+    id: number;
+    name: string;
+    createdAt: string;
+  }>;
   _count?: {
     studentSubject: number;
     quizzes: number;
