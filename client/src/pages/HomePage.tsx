@@ -1,4 +1,3 @@
-import ContactContainer from "@/contact/components/ContactContainer";
 import NavComponent from "../components/NavComponent";
 import { useAppContext } from "@/context/useAppContext";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ export default function HomePage() {
               </p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               <Link to="/admin">
                 <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <Settings className="h-8 w-8" />
@@ -42,6 +41,13 @@ export default function HomePage() {
                 <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
                   <BookOpen className="h-8 w-8" />
                   <span className="font-semibold">Gestionar Materias</span>
+                </Button>
+              </Link>
+
+              <Link to="/admin/quizzes">
+                <Button className="w-full h-20 bg-white/10 hover:bg-white/20 border border-white/20 text-white flex flex-col items-center justify-center space-y-2 backdrop-blur-sm transition-all duration-300 hover:scale-105">
+                  <FileText className="h-8 w-8" />
+                  <span className="font-semibold">Gestionar Evaluaciones</span>
                 </Button>
               </Link>
             </div>
@@ -86,9 +92,18 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Show contact container only for non-admin and non-student users */}
+      {/* Welcome message for users without specific roles */}
       {(!user?.role || (user?.role !== "ADMIN" && user?.role !== "STUDENT")) && (
-        <ContactContainer />
+        <div className="bg-white py-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Bienvenido al Sistema de Evaluaciones
+            </h2>
+            <p className="text-lg text-gray-600 mb-8">
+              Tu rol será asignado por un administrador. Una vez asignado, podrás acceder a las funcionalidades correspondientes.
+            </p>
+          </div>
+        </div>
       )}
     </div>
   );

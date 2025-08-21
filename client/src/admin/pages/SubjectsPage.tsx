@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, Search, Filter } from "lucide-react";
 import { Link } from "react-router";
 import { useSubjects, useSubjectActions } from "../hooks/useSubjects";
 import SubjectList from "../components/SubjectList";
-import SubjectForm from "../components/SubjectForm";
+import SubjectForm from "../components/SubjectForm"; 
 import SubjectStats from "../components/SubjectStats";
 
 export default function SubjectsPage() {
@@ -12,7 +12,7 @@ export default function SubjectsPage() {
   const [editingSubject, setEditingSubject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [professorFilter, setProfessorFilter] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1); 
 
   const { subjects, pagination, loading, refetch } = useSubjects({
     page: currentPage,
@@ -35,25 +35,17 @@ export default function SubjectsPage() {
   };
 
   const handleCreateSubject = async (subjectData: any) => {
-    try {
       await createSubject(subjectData);
       setShowForm(false);
       refetch();
-    } catch (error) {
-      // Error handled by hook
-    }
   };
 
   const handleUpdateSubject = async (subjectData: any) => {
     if (!editingSubject) return;
-    try {
       await updateSubject(editingSubject.id, subjectData);
       setShowForm(false);
       setEditingSubject(null);
       refetch();
-    } catch (error) {
-      // Error handled by hook
-    }
   };
 
   const handleDeleteSubject = async (subjectId: number) => {
