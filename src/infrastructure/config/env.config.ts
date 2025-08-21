@@ -1,25 +1,18 @@
-import {
-  DATABASE_URI,
-  POSTGRES_URL_NON_POOLING,
-} from '@core/constant/env.constant';
+import * as z from 'zod';
 
-import * as Joi from 'joi';
+export const envValidationSchema = z.object({
+  PORT: z.coerce.number().int().positive().default(3000),
 
-export const envValidationSchema = Joi.object({
-  PORT: Joi.number().default(3000),
-  NODE_ENV: Joi.string()
-    .valid('development', 'production')
+  NODE_ENV: z.enum(['development', 'production'])
     .default('development'),
 
-  // Database
-  DB_SSL_ENABLED: Joi.boolean().default(false),
-  POSTGRES_URL_NON_POOLING: Joi.string(),
-  DATABASE_URI: Joi.string(),
+  DATABASE_URL: z.string()
+    .min(1, 'DATABASE_URL is required'),
 
+  DIRECT_URL: z.string()
+    .min(1, 'DIRECT_URL is required'),
 
-})
-  .or(POSTGRES_URL_NON_POOLING, DATABASE_URI)
-  .messages({
-    'object.missing':
-      '"POSTGRES_URL_NON_POOLING" or "DATABASE_URI" is required',
-  });
+  SECRET_KEY: z.string()
+    .min(32, 'SECRET_KEY must be at least 32 characters')
+    .default('SECRET_KEY'),
+}).strict();

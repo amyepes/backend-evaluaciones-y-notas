@@ -1,20 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-//import { Prisma } from '@prisma/client';
-import { PrismaModule } from './prisma.module';
-//import { PrismaModule } from './infrastructure/module/prisma.module';
+import { envValidationSchema } from 'src/infrastructure/config/env.config';
+import { ControllerModule } from 'src/infrastructure/module/controller.module';
 
 @Module({
   imports: [
+    ControllerModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      validationSchema: envValidationSchema
     }),
-    PrismaModule,
-  ],
-  controllers: [AppController],
-  providers: [AppService],
+  ]
 })
 export class AppModule {}
